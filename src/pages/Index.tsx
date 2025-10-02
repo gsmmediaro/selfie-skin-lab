@@ -1,21 +1,59 @@
 import { Button } from "@/components/ui/button";
-import { Camera, TrendingUp, Sparkles, CheckCircle, LogIn } from "lucide-react";
+import { Camera, TrendingUp, Sparkles, CheckCircle, LogIn, User, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-image.jpg";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userEmail, setUserEmail] = useState<string>("");
 
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setIsAuthenticated(!!user);
+      setUserEmail(user?.email || "");
     };
     checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setIsAuthenticated(!!session?.user);
+        setUserEmail(session?.user?.email || "");
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to log out. Please try again.",
+      });
+    } else {
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+      navigate("/");
+    }
+  };
 
   const features = [
     {
@@ -62,7 +100,7 @@ const Index = () => {
           <div className="text-2xl font-bold text-primary">
             SkinScan
           </div>
-          {!isAuthenticated && (
+          {!isAuthenticated ? (
             <Button
               variant="outline"
               onClick={() => navigate("/auth")}
@@ -71,6 +109,36 @@ const Index = () => {
               <LogIn className="h-4 w-4" />
               Sign In
             </Button>
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="rounded-full">
+                  <User className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">Account</span>
+                    <span className="text-xs text-muted-foreground truncate">{userEmail}</span>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/progress")}>
+                  <TrendingUp className="mr-2 h-4 w-4" />
+                  My Progress
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/scan")}>
+                  <Camera className="mr-2 h-4 w-4" />
+                  New Scan
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Log Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
 
