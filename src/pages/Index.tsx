@@ -5,13 +5,10 @@ import heroImage from "@/assets/hero-image.jpg";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
@@ -110,35 +107,49 @@ const Index = () => {
               Sign In
             </Button>
           ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+            <Popover>
+              <PopoverTrigger asChild>
                 <Button variant="outline" size="icon" className="rounded-full">
                   <User className="h-5 w-5" />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">Account</span>
-                    <span className="text-xs text-muted-foreground truncate">{userEmail}</span>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-64 bg-card z-50">
+                <div className="space-y-4">
+                  <div className="border-b pb-3">
+                    <p className="text-sm font-medium">Account</p>
+                    <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
                   </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/progress")}>
-                  <TrendingUp className="mr-2 h-4 w-4" />
-                  My Progress
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/scan")}>
-                  <Camera className="mr-2 h-4 w-4" />
-                  New Scan
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Log Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <div className="space-y-2">
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start"
+                      onClick={() => navigate("/progress")}
+                    >
+                      <TrendingUp className="mr-2 h-4 w-4" />
+                      My Progress
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start"
+                      onClick={() => navigate("/scan")}
+                    >
+                      <Camera className="mr-2 h-4 w-4" />
+                      New Scan
+                    </Button>
+                  </div>
+                  <div className="border-t pt-3">
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start text-destructive hover:text-destructive"
+                      onClick={handleLogout}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Log Out
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           )}
         </div>
 
