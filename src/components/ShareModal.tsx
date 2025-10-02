@@ -1,0 +1,169 @@
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Share2, Mail, Twitter, Copy, Sparkles } from "lucide-react";
+import { toast } from "sonner";
+import confetti from "canvas-confetti";
+
+interface ShareModalProps {
+  open: boolean;
+  onClose: () => void;
+  onUnlock: () => void;
+  glowScore: number;
+}
+
+export const ShareModal = ({ open, onClose, onUnlock, glowScore }: ShareModalProps) => {
+  const [emails, setEmails] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const shareText = `I just got a ${glowScore} Glow Score on SkinScan! 🌟 Check out your skin health too!`;
+  const shareUrl = window.location.origin;
+
+  const handleShare = async (platform: string) => {
+    setLoading(true);
+    
+    // Simulate share action
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    if (platform === "copy") {
+      navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+      toast.success("Link copied to clipboard!");
+    } else {
+      toast.success(`Shared to ${platform}!`);
+    }
+
+    triggerUnlock();
+  };
+
+  const handleInvite = async () => {
+    if (!emails.trim()) {
+      toast.error("Please enter at least one email address");
+      return;
+    }
+
+    const emailList = emails.split(",").map(e => e.trim()).filter(e => e);
+    if (emailList.length < 3) {
+      toast.error("Please invite at least 3 friends");
+      return;
+    }
+
+    setLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    toast.success(`Invitations sent to ${emailList.length} friends!`);
+    triggerUnlock();
+  };
+
+  const triggerUnlock = () => {
+    // Trigger confetti
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#FF6B9D', '#6B5CE7', '#4ADE80'],
+    });
+
+    setTimeout(() => {
+      onUnlock();
+      onClose();
+      toast.success("Full report unlocked! 🎉", {
+        description: "You now have access to your complete skin analysis.",
+      });
+    }, 500);
+  };
+
+  const handlePremiumUpgrade = () => {
+    toast.info("Premium upgrade coming soon!");
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold bg-gradient-glow bg-clip-text text-transparent">
+            Unlock Your Full Report
+          </DialogTitle>
+          <DialogDescription>
+            Share your Glow Score to see your complete skin analysis with personalized recommendations
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6 py-4">
+          {/* Share Options */}
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-foreground">Quick Share</p>
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant="outline"
+                className="flex items-center gap-2"
+                onClick={() => handleShare("twitter")}
+                disabled={loading}
+              >
+                <Twitter className="w-4 h-4" />
+                Twitter
+              </Button>
+              <Button
+                variant="outline"
+                className="flex items-center gap-2"
+                onClick={() => handleShare("copy")}
+                disabled={loading}
+              >
+                <Copy className="w-4 h-4" />
+                Copy Link
+              </Button>
+            </div>
+          </div>
+
+          {/* Invite Friends */}
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-foreground">Invite 3 Friends</p>
+            <div className="flex gap-2">
+              <Input
+                placeholder="friend1@email.com, friend2@email.com, ..."
+                value={emails}
+                onChange={(e) => setEmails(e.target.value)}
+                disabled={loading}
+              />
+              <Button
+                onClick={handleInvite}
+                disabled={loading}
+                className="bg-gradient-glow"
+              >
+                <Mail className="w-4 h-4" />
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Separate multiple emails with commas
+            </p>
+          </div>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Or</span>
+            </div>
+          </div>
+
+          {/* Premium Option */}
+          <Button
+            onClick={handlePremiumUpgrade}
+            disabled={loading}
+            className="w-full bg-secondary hover:bg-secondary/90 gap-2"
+          >
+            <Sparkles className="w-4 h-4" />
+            Skip with Premium - $9.99/month
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
