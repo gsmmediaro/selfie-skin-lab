@@ -15,14 +15,14 @@ export const MetricCard = ({ title, score, severity, description, icon: Icon }: 
   const [expanded, setExpanded] = useState(false);
 
   const getScoreColor = (score: number) => {
-    if (score >= 8) return "text-success";
-    if (score >= 6) return "text-warning";
+    if (score >= 80) return "text-success";
+    if (score >= 60) return "text-warning";
     return "text-primary";
   };
 
   const getProgressColor = (score: number) => {
-    if (score >= 8) return "bg-success";
-    if (score >= 6) return "bg-warning";
+    if (score >= 80) return "bg-success";
+    if (score >= 60) return "bg-warning";
     return "bg-primary";
   };
 
@@ -39,16 +39,16 @@ export const MetricCard = ({ title, score, severity, description, icon: Icon }: 
           </div>
         </div>
         <div className={cn("text-3xl font-bold", getScoreColor(score))}>
-          {score}<span className="text-lg text-muted-foreground">/10</span>
+          {score}<span className="text-lg text-muted-foreground">/100</span>
         </div>
       </div>
 
       <div className="space-y-2 mb-4">
         <div className="flex justify-between text-sm text-muted-foreground">
           <span>Quality</span>
-          <span>{score * 10}%</span>
+          <span>{score}%</span>
         </div>
-        <Progress value={score * 10} className="h-2" indicatorClassName={getProgressColor(score)} />
+        <Progress value={score} className="h-2" indicatorClassName={getProgressColor(score)} />
       </div>
 
       {!expanded && (
@@ -59,9 +59,9 @@ export const MetricCard = ({ title, score, severity, description, icon: Icon }: 
         <div className="text-sm text-muted-foreground space-y-2 mb-3 animate-fade-in">
           <p>{description}</p>
           <p className="mt-3 pt-3 border-t border-border">
-            {score >= 8 
+            {score >= 80 
               ? "Your skin is showing excellent results in this area. Keep up your current routine!"
-              : score >= 6
+              : score >= 60
               ? "Good progress! Consider targeted treatments to further improve this metric."
               : "This area could benefit from specialized care. Check our recommendations for targeted products."}
           </p>

@@ -149,7 +149,7 @@ const Scan = () => {
         redness: { ...mapMetric(100 - apiAnalysis.evenness), description: "Skin inflammation" },
         texture: { ...mapMetric(apiAnalysis.texture), description: "Skin smoothness" },
         fineLines: { ...mapMetric(100 - apiAnalysis.wrinkles), description: "Early signs of aging" },
-        darkSpots: { ...mapMetric(apiAnalysis.evenness), description: "Pigmentation issues" },
+        darkSpots: { ...mapMetric(100 - apiAnalysis.evenness), description: "Pigmentation issues" },
       };
 
       // Calculate strength and focus area

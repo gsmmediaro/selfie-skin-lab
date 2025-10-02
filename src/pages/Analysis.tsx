@@ -128,7 +128,7 @@ const Analysis = () => {
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <MetricCard
-                  title={key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}
+                  title={key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim()}
                   score={metric.score}
                   severity={metric.severity}
                   description={metric.description}
