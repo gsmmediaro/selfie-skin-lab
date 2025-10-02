@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Camera, RotateCcw, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { SkinAnalysis } from "@/lib/mockAI";
+import { analyzeSkin } from "@/lib/mockAI";
 import { saveScan, setCurrentScan } from "@/lib/storage";
 
 const Scan = () => {
@@ -13,7 +13,6 @@ const Scan = () => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [captured, setCaptured] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string>("");
-  const [imageBlob, setImageBlob] = useState<Blob | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
 
   const startCamera = async () => {
@@ -47,136 +46,66 @@ const Scan = () => {
 
     if (!context) return;
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    // --- START OF NEW RESIZING LOGIC ---
+    const maxWidth = 640; // Set the maximum width for faster processing
+    const videoWidth = video.videoWidth;
+    const videoHeight = video.videoHeight;
 
-    canvas.toBlob((blob) => {
-      if (blob) {
-        const imageUrl = URL.createObjectURL(blob);
-        setCapturedImage(imageUrl);
-        setImageBlob(blob);
-        setCaptured(true);
-        stopCamera();
-        toast.success("Photo captured! Ready to analyze.");
-      }
-    }, "image/jpeg", 0.8);
+    // Calculate the new dimensions to maintain the aspect ratio
+    const aspectRatio = videoHeight / videoWidth;
+    let finalWidth = videoWidth;
+    let finalHeight = videoHeight;
+
+    if (finalWidth > maxWidth) {
+      finalWidth = maxWidth;
+      finalHeight = finalWidth * aspectRatio;
+    }
+
+    canvas.width = finalWidth;
+    canvas.height = finalHeight;
+
+    // Draw the video frame onto the canvas at the new, smaller size
+    context.drawImage(video, 0, 0, finalWidth, finalHeight);
+    // --- END OF NEW RESIZING LOGIC ---
+
+    const imageData = canvas.toDataURL("image/jpeg", 0.8);
+    setCapturedImage(imageData);
+    setCaptured(true);
+    stopCamera();
+    toast.success("Photo captured! Ready to analyze.");
   };
 
   const retake = () => {
-    if (capturedImage) {
-      URL.revokeObjectURL(capturedImage);
-    }
     setCaptured(false);
     setCapturedImage("");
-    setImageBlob(null);
     startCamera();
   };
 
   const analyze = async () => {
-    if (!imageBlob || !capturedImage) return;
+    if (!capturedImage) return;
 
     setAnalyzing(true);
     toast.info("Analyzing your skin...", { description: "This may take a few seconds" });
 
     try {
-      // Send binary image to webhook
-      const webhookResponse = await fetch("https://shadow424.app.n8n.cloud/webhook/skin-scan-ai", {
+      // Send image to webhook
+      const webhookResponse = await fetch("https://shadow424.app.n8n.cloud/webhook-test/skin-scan-ai", {
         method: "POST",
         headers: {
-          "Content-Type": "image/jpeg",
+          "Content-Type": "application/json",
         },
-        body: imageBlob,
+        body: JSON.stringify({
+          image: capturedImage,
+          timestamp: new Date().toISOString(),
+        }),
       });
 
       if (!webhookResponse.ok) {
         throw new Error("Webhook request failed");
       }
 
-      const webhookData = await webhookResponse.json();
-      console.log('Webhook response:', webhookData);
-
-      if (webhookData.output?.status !== 'success' || !webhookData.output?.analysis) {
-        throw new Error('Invalid webhook response');
-      }
-
-      const apiAnalysis = webhookData.output.analysis;
-
-      // Helper functions
-      const convertScore = (score: number) => Math.round(score / 10);
-      const getSeverity = (score: number) => {
-        if (score >= 8) return "Excellent";
-        if (score >= 6) return "Good";
-        if (score >= 4) return "Fair";
-        return "Needs Attention";
-      };
-      const getDescription = (metricType: string) => {
-        const descriptions: Record<string, string> = {
-          acne: "Analysis of breakouts, blemishes, and acne-prone areas",
-          redness: "Assessment of skin redness and inflammation",
-          texture: "Evaluation of skin smoothness and pore visibility",
-          fineLines: "Detection of fine lines and wrinkles",
-          darkSpots: "Identification of hyperpigmentation and dark spots"
-        };
-        return descriptions[metricType] || "";
-      };
-
-      // Convert scores
-      const acneScore = convertScore(apiAnalysis.hydration);
-      const rednessScore = convertScore(apiAnalysis.evenness);
-      const textureScore = convertScore(apiAnalysis.texture);
-      const fineLinesScore = convertScore(apiAnalysis.wrinkles);
-      const darkSpotsScore = convertScore(apiAnalysis.evenness);
-
-      // Calculate strength and focus area
-      const scores = [
-        { name: "Clear Complexion", score: acneScore },
-        { name: "Even Tone", score: rednessScore },
-        { name: "Smooth Texture", score: textureScore },
-        { name: "Youthful Appearance", score: fineLinesScore },
-        { name: "Radiant Brightness", score: darkSpotsScore }
-      ];
-      const strength = scores.sort((a, b) => b.score - a.score)[0].name;
-      const focusArea = scores.sort((a, b) => a.score - b.score)[0].name;
-
-      // Build analysis object
-      const analysis: SkinAnalysis = {
-        id: `scan_${Date.now()}`,
-        timestamp: Date.now(),
-        glowScore: apiAnalysis.glowScore,
-        imageData: capturedImage,
-        metrics: {
-          acne: {
-            score: acneScore,
-            severity: getSeverity(acneScore),
-            description: getDescription('acne')
-          },
-          redness: {
-            score: rednessScore,
-            severity: getSeverity(rednessScore),
-            description: getDescription('redness')
-          },
-          texture: {
-            score: textureScore,
-            severity: getSeverity(textureScore),
-            description: getDescription('texture')
-          },
-          fineLines: {
-            score: fineLinesScore,
-            severity: getSeverity(fineLinesScore),
-            description: getDescription('fineLines')
-          },
-          darkSpots: {
-            score: darkSpotsScore,
-            severity: getSeverity(darkSpotsScore),
-            description: getDescription('darkSpots')
-          }
-        },
-        strength,
-        focusArea,
-        unlocked: false
-      };
-
+      // Continue with mock analysis
+      const analysis = await analyzeSkin(capturedImage);
       saveScan(analysis);
       setCurrentScan(analysis);
       navigate(`/results/${analysis.id}`);
@@ -187,16 +116,11 @@ const Scan = () => {
     }
   };
 
-  // Auto-start camera on mount and cleanup
-  useEffect(() => {
+  // Auto-start camera on mount
+  useState(() => {
     startCamera();
-    return () => {
-      stopCamera();
-      if (capturedImage) {
-        URL.revokeObjectURL(capturedImage);
-      }
-    };
-  }, []);
+    return () => stopCamera();
+  });
 
   return (
     <div className="min-h-screen bg-gradient-subtle flex flex-col">
