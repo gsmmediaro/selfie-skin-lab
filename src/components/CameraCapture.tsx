@@ -40,11 +40,6 @@ export const CameraCapture = ({ stream, onCapture }: CameraCaptureProps) => {
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">Position Your Face</h2>
-        <p className="text-muted-foreground">Center your face and make sure you're in good lighting</p>
-      </div>
-
       {/* Camera Preview */}
       <div className="relative aspect-[3/4] max-h-[70vh] bg-black rounded-3xl overflow-hidden">
         <video
@@ -57,7 +52,7 @@ export const CameraCapture = ({ stream, onCapture }: CameraCaptureProps) => {
 
         {/* Face Guide Overlay */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-64 h-80 rounded-[50%] border-4 border-primary/50 border-dashed" />
+          <div className="w-64 h-80 rounded-[50%] border-4 border-white/30 border-dashed" />
         </div>
       </div>
 
@@ -74,29 +69,6 @@ export const CameraCapture = ({ stream, onCapture }: CameraCaptureProps) => {
           <Camera className="mr-2 h-5 w-5" />
           Take Photo
         </Button>
-      </div>
-
-      {/* Tips */}
-      <div className="bg-accent/50 rounded-2xl p-6 space-y-3">
-        <h3 className="font-semibold text-foreground">Tips for best results:</h3>
-        <ul className="space-y-2 text-sm text-muted-foreground">
-          <li className="flex items-start gap-2">
-            <span className="text-primary">•</span>
-            Use natural lighting or bright indoor lighting
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-primary">•</span>
-            Remove makeup for most accurate analysis
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-primary">•</span>
-            Keep your face centered and look directly at the camera
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-primary">•</span>
-            Avoid shadows on your face
-          </li>
-        </ul>
       </div>
     </div>
   );
