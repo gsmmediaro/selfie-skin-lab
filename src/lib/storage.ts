@@ -10,6 +10,7 @@ export const saveScan = async (scan: SkinAnalysis): Promise<void> => {
   }
 
   const { error } = await supabase.from("scans").insert({
+    id: scan.id,
     user_id: user.id,
     glow_score: scan.glowScore,
     metrics: scan.metrics as any,
@@ -71,7 +72,7 @@ export const getScanById = async (id: string): Promise<SkinAnalysis | null> => {
     .select("*")
     .eq("id", id)
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
   if (error || !data) {
     console.error("Error fetching scan:", error);
