@@ -1,14 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { Camera, TrendingUp, Sparkles, CheckCircle, LogIn, User, LogOut } from "lucide-react";
+import { Camera, TrendingUp, Sparkles, CheckCircle, LogIn, User, LogOut, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-image.jpg";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
@@ -16,6 +11,8 @@ const Index = () => {
   const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState<string>("");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -35,7 +32,24 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMenuOpen]);
+
   const handleLogout = async () => {
+    setIsMenuOpen(false);
     const { error } = await supabase.auth.signOut();
     if (error) {
       toast({
@@ -107,49 +121,60 @@ const Index = () => {
               Sign In
             </Button>
           ) : (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="icon" className="rounded-full">
-                  <User className="h-5 w-5" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="w-64 bg-card z-50">
-                <div className="space-y-4">
-                  <div className="border-b pb-3">
-                    <p className="text-sm font-medium">Account</p>
-                    <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start"
-                      onClick={() => navigate("/progress")}
-                    >
-                      <TrendingUp className="mr-2 h-4 w-4" />
-                      My Progress
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start"
-                      onClick={() => navigate("/scan")}
-                    >
-                      <Camera className="mr-2 h-4 w-4" />
-                      New Scan
-                    </Button>
-                  </div>
-                  <div className="border-t pt-3">
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start text-destructive hover:text-destructive"
-                      onClick={handleLogout}
-                    >
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Log Out
-                    </Button>
+            <div className="relative" ref={menuRef}>
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-full"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+              >
+                <User className="h-5 w-5" />
+              </Button>
+              
+              {isMenuOpen && (
+                <div className="absolute right-0 mt-2 w-64 bg-card border border-border rounded-lg shadow-lg z-50 animate-in fade-in slide-in-from-top-2">
+                  <div className="p-4 space-y-4">
+                    <div className="border-b border-border pb-3">
+                      <p className="text-sm font-medium text-foreground">Account</p>
+                      <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <button
+                        className="w-full flex items-center px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          navigate("/progress");
+                        }}
+                      >
+                        <TrendingUp className="mr-2 h-4 w-4" />
+                        My Progress
+                      </button>
+                      <button
+                        className="w-full flex items-center px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          navigate("/scan");
+                        }}
+                      >
+                        <Camera className="mr-2 h-4 w-4" />
+                        New Scan
+                      </button>
+                    </div>
+                    
+                    <div className="border-t border-border pt-3">
+                      <button
+                        className="w-full flex items-center px-3 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                        onClick={handleLogout}
+                      >
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Log Out
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </PopoverContent>
-            </Popover>
+              )}
+            </div>
           )}
         </div>
 
