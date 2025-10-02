@@ -70,6 +70,23 @@ const Scan = () => {
     toast.info("Analyzing your skin...", { description: "This may take a few seconds" });
 
     try {
+      // Send image to webhook
+      const webhookResponse = await fetch("https://shadow424.app.n8n.cloud/webhook/92694f16-6c5f-4db9-905f-eb6043d25d7d", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          image: capturedImage,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+
+      if (!webhookResponse.ok) {
+        throw new Error("Webhook request failed");
+      }
+
+      // Continue with mock analysis
       const analysis = await analyzeSkin(capturedImage);
       saveScan(analysis);
       setCurrentScan(analysis);
