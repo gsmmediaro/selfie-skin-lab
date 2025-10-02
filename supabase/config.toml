@@ -15,5 +15,11 @@ verify_jwt = true
 [functions.check-subscription]
 verify_jwt = true
 
+[functions.check-scan-eligibility]
+verify_jwt = true
+
+[functions.award-achievement]
+verify_jwt = true
+
 [functions.stripe-webhook]
 verify_jwt = false

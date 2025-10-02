@@ -218,6 +218,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: string
       }
+      increment_total_achievements: {
+        Args: { user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

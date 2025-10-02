@@ -2,12 +2,14 @@ import { SkinAnalysis } from "./mockAI";
 import { supabase } from "@/integrations/supabase/client";
 
 // Database-backed storage functions
-export const saveScan = async (scan: SkinAnalysis): Promise<void> => {
+export const saveScan = async (scan: SkinAnalysis, isPremium: boolean = false): Promise<void> => {
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
     throw new Error("User must be authenticated to save scans");
   }
+
+  const scanType = isPremium ? "premium" : "free";
 
   const { error } = await supabase.from("scans").insert({
     id: scan.id,
@@ -16,11 +18,42 @@ export const saveScan = async (scan: SkinAnalysis): Promise<void> => {
     metrics: scan.metrics as any,
     image_url: scan.imageData,
     unlocked: scan.unlocked,
+    scan_type: scanType,
   });
 
   if (error) {
     console.error("Error saving scan:", error);
     throw error;
+  }
+
+  // Update last_free_scan_date for free users
+  if (!isPremium) {
+    const { error: updateError } = await supabase
+      .from("user_stats")
+      .update({ last_free_scan_date: new Date().toISOString() })
+      .eq("user_id", user.id);
+
+    if (updateError) {
+      console.error("Error updating last_free_scan_date:", updateError);
+    }
+  }
+
+  // Update total_scans count
+  const { data: currentStats } = await supabase
+    .from("user_stats")
+    .select("total_scans")
+    .eq("user_id", user.id)
+    .single();
+
+  if (currentStats) {
+    const { error: statsError } = await supabase
+      .from("user_stats")
+      .update({ total_scans: (currentStats.total_scans || 0) + 1 })
+      .eq("user_id", user.id);
+
+    if (statsError) {
+      console.error("Error updating total_scans:", statsError);
+    }
   }
 };
 
