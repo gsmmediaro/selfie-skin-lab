@@ -94,12 +94,21 @@ const Scan = () => {
 
       const webhookData = await webhookResponse.json();
 
-      // Validate response structure - expecting array with analysis object
-      if (!Array.isArray(webhookData) || webhookData.length === 0 || !webhookData[0]?.analysis) {
+      // Validate response structure - handle both array and object formats
+      let apiAnalysis;
+
+      if (Array.isArray(webhookData)) {
+        // Handle array format: [{ "analysis": {...} }]
+        if (webhookData.length === 0 || !webhookData[0]?.analysis) {
+          throw new Error('Invalid webhook response format');
+        }
+        apiAnalysis = webhookData[0].analysis;
+      } else if (webhookData?.analysis) {
+        // Handle object format: { "analysis": {...} }
+        apiAnalysis = webhookData.analysis;
+      } else {
         throw new Error('Invalid webhook response format');
       }
-
-      const apiAnalysis = webhookData[0].analysis;
 
       // Transform webhook response to SkinAnalysis format
       const glowScore = Math.round(apiAnalysis.glowScore / 10);
