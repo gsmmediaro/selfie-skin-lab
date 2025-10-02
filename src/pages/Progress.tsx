@@ -9,18 +9,30 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { CircularProgress } from "@/components/CircularProgress";
 import { MetricSparklineCard } from "@/components/MetricSparklineCard";
 import { format, differenceInDays } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Progress = () => {
   const navigate = useNavigate();
   const [scans, setScans] = useState<SkinAnalysis[]>([]);
 
+  // Check authentication and load scans
   useEffect(() => {
-    const loadHistory = async () => {
+    const checkAuthAndLoadHistory = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Please sign in to view your progress", {
+          description: "You'll be redirected to the login page"
+        });
+        setTimeout(() => navigate("/auth"), 2000);
+        return;
+      }
+
       const history = await getScanHistory();
       setScans(history);
     };
-    loadHistory();
-  }, []);
+    checkAuthAndLoadHistory();
+  }, [navigate]);
 
   const chartData = scans
     .slice()

@@ -31,8 +31,10 @@ const Results = () => {
     const loadScan = async () => {
       const scanData = await getScanById(scanId);
       if (!scanData) {
-        toast.error("Scan not found");
-        navigate("/");
+        toast.error("Scan not found", {
+          description: "Please sign in to view your scans"
+        });
+        setTimeout(() => navigate("/auth"), 2000);
         return;
       }
 

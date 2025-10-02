@@ -7,6 +7,7 @@ import { PreCaptureInstructions } from "@/components/PreCaptureInstructions";
 import { CameraCapture } from "@/components/CameraCapture";
 import { ReviewCapture } from "@/components/ReviewCapture";
 import { Sparkles } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 type ScanStage = "instructions" | "camera" | "review" | "analyzing";
 
@@ -17,6 +18,20 @@ const Scan = () => {
   const [capturedImage, setCapturedImage] = useState<string>("");
   const [imageBlob, setImageBlob] = useState<Blob | null>(null);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
+
+  // Check authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Please sign in to use SkinScan", {
+          description: "You'll be redirected to the login page"
+        });
+        setTimeout(() => navigate("/auth"), 2000);
+      }
+    };
+    checkAuth();
+  }, [navigate]);
 
   const startCamera = async () => {
     try {
@@ -163,13 +178,22 @@ const Scan = () => {
         unlocked: false,
       };
 
-      saveScan(analysis);
+      await saveScan(analysis);
       setCurrentScan(analysis);
       navigate(`/results/${analysis.id}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Analysis error:", error);
-      toast.error("Analysis failed. Please try again.");
-      setStage("review");
+      
+      // Check if it's an authentication error
+      if (error.message?.includes("authenticated") || error.code === "PGRST301") {
+        toast.error("Please sign in to save your scan", {
+          description: "Redirecting to login..."
+        });
+        setTimeout(() => navigate("/auth"), 2000);
+      } else {
+        toast.error("Analysis failed. Please try again.");
+        setStage("review");
+      }
     }
   };
 

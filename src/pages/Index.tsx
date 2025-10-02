@@ -1,10 +1,21 @@
 import { Button } from "@/components/ui/button";
-import { Camera, TrendingUp, Sparkles, CheckCircle } from "lucide-react";
+import { Camera, TrendingUp, Sparkles, CheckCircle, LogIn } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-image.jpg";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+    };
+    checkAuth();
+  }, []);
 
   const features = [
     {
@@ -45,7 +56,24 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-subtle">
       {/* Hero Section */}
-      <section className="container mx-auto px-4 pt-20 pb-16">
+      <section className="container mx-auto px-4 pt-8 pb-16">
+        {/* Header with Sign In */}
+        <div className="flex items-center justify-between mb-12">
+          <div className="text-2xl font-bold text-primary">
+            SkinScan
+          </div>
+          {!isAuthenticated && (
+            <Button
+              variant="outline"
+              onClick={() => navigate("/auth")}
+              className="gap-2"
+            >
+              <LogIn className="h-4 w-4" />
+              Sign In
+            </Button>
+          )}
+        </div>
+
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div className="space-y-8 animate-fade-in">
             <div className="space-y-4">
