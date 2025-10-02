@@ -96,6 +96,17 @@ const Scan = () => {
     toast.info("Analyzing your skin...", { description: "This may take a few seconds" });
 
     try {
+      // Get the user's session token for authentication
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        toast.error("Please sign in to analyze your skin", {
+          description: "Redirecting to login..."
+        });
+        setTimeout(() => navigate("/auth"), 2000);
+        return;
+      }
+
       const formData = new FormData();
       formData.append('image', imageBlob, 'selfie.jpg');
 
@@ -104,7 +115,7 @@ const Scan = () => {
       const webhookResponse = await fetch(backendUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: formData,
       });
@@ -112,6 +123,24 @@ const Scan = () => {
       if (!webhookResponse.ok) {
         const errorText = await webhookResponse.text();
         console.error('Backend error:', errorText);
+        
+        // Handle specific error codes
+        if (webhookResponse.status === 401) {
+          toast.error("Authentication failed", {
+            description: "Please sign in again"
+          });
+          setTimeout(() => navigate("/auth"), 2000);
+          return;
+        }
+        
+        if (webhookResponse.status === 429) {
+          toast.error("Scan limit reached", {
+            description: "You've used all your free scans. Please upgrade to continue."
+          });
+          setStage("review");
+          return;
+        }
+        
         throw new Error(`Analysis failed (${webhookResponse.status})`);
       }
 
