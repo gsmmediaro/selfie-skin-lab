@@ -551,7 +551,7 @@ const Routine = () => {
           {/* Sidebar */}
           <aside className="space-y-6">
             {/* Customization */}
-            <Card className="p-6 sticky top-24">
+            <Card className="p-6">
               <h3 className="font-semibold mb-4">Customize Routine</h3>
               
               <div className="space-y-4">
