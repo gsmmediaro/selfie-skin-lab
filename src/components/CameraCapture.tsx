@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FlipHorizontal, Grid3x3, Zap, ZapOff } from "lucide-react";
-
+import { useFaceDetection } from "@/hooks/useFaceDetection";
 interface CameraCaptureProps {
   stream: MediaStream | null;
   onCapture: (blob: Blob, imageUrl: string) => void;
@@ -11,55 +11,37 @@ interface CameraCaptureProps {
 export const CameraCapture = ({ stream, onCapture, onFlipCamera }: CameraCaptureProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [faceDetected, setFaceDetected] = useState(false);
-  const [facePosition, setFacePosition] = useState<"perfect" | "adjust" | "poor">("adjust");
-  const [lightingQuality, setLightingQuality] = useState<"excellent" | "good" | "dark">("good");
   const [feedback, setFeedback] = useState<string>("Position your face in the oval");
   const [countdown, setCountdown] = useState<number | null>(null);
   const [showGrid, setShowGrid] = useState(false);
   const [flashEnabled, setFlashEnabled] = useState(false);
   const [stabilityTimer, setStabilityTimer] = useState<number>(0);
-
+  const { ready, faceDetected, positionQuality, lightingQuality, landmarks } = useFaceDetection(videoRef);
+  // Bind stream to video element
   useEffect(() => {
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
-      
-      // Simulate progressive face detection that stabilizes
-      let detectionPhase = 0;
-      
-      const checkInterval = setInterval(() => {
-        if (videoRef.current && videoRef.current.readyState >= 2) {
-          detectionPhase++;
-          
-          // Progressive detection: starts poor, then adjusts, then perfect, then stays stable
-          if (detectionPhase <= 2) {
-            // Initial phase: not detected or poor position
-            setFaceDetected(detectionPhase > 1);
-            setFacePosition("poor");
-            setLightingQuality("dark");
-            setFeedback("Position your face in the oval");
-            setStabilityTimer(0);
-          } else if (detectionPhase <= 4) {
-            // Adjustment phase
-            setFaceDetected(true);
-            setFacePosition("adjust");
-            setLightingQuality("good");
-            setFeedback("Almost there - center your face");
-            setStabilityTimer(0);
-          } else {
-            // Perfect and stable phase - once reached, stay here
-            setFaceDetected(true);
-            setFacePosition("perfect");
-            setLightingQuality("excellent");
-            setFeedback("Perfect! Hold still...");
-            setStabilityTimer(prev => prev + 1);
-          }
-        }
-      }, 1000);
-
-      return () => clearInterval(checkInterval);
     }
   }, [stream]);
+
+  // Feedback + stability gating
+  useEffect(() => {
+    if (!faceDetected) {
+      setFeedback("Position your face in the oval");
+      setStabilityTimer(0);
+      return;
+    }
+    if (positionQuality === "perfect" && lightingQuality !== "dark") {
+      setFeedback("Perfect! Hold still...");
+      setStabilityTimer((p) => Math.min(p + 1, 10));
+    } else if (positionQuality === "adjust") {
+      setFeedback("Almost there - center your face");
+      setStabilityTimer(0);
+    } else {
+      setFeedback("Move closer to the camera");
+      setStabilityTimer(0);
+    }
+  }, [faceDetected, positionQuality, lightingQuality]);
 
   const handleCapture = () => {
     if (!videoRef.current || !canvasRef.current) return;
@@ -100,7 +82,7 @@ export const CameraCapture = ({ stream, onCapture, onFlipCamera }: CameraCapture
 
   const getOverlayColor = () => {
     if (!faceDetected) return "border-muted-foreground/30";
-    switch (facePosition) {
+    switch (positionQuality) {
       case "perfect":
         return "border-success";
       case "adjust":
@@ -132,14 +114,14 @@ export const CameraCapture = ({ stream, onCapture, onFlipCamera }: CameraCapture
     }
   };
 
-  const canCapture = faceDetected && facePosition === "perfect" && lightingQuality !== "dark" && stabilityTimer >= 2;
+  const canCapture = faceDetected && positionQuality === "perfect" && lightingQuality !== "dark" && stabilityTimer >= 10;
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
       {/* Feedback Bubble */}
       <div className="text-center">
         <div className={`inline-block px-6 py-3 rounded-full ${
-          feedback.includes("Perfect") ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
+          positionQuality === "perfect" && lightingQuality !== "dark" ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
         } font-medium animate-fade-in`}>
           {feedback}
         </div>
@@ -171,17 +153,21 @@ export const CameraCapture = ({ stream, onCapture, onFlipCamera }: CameraCapture
           <div 
             className={`w-64 h-80 rounded-[50%] border-4 ${getOverlayColor()} transition-colors duration-300`}
             style={{
-              animation: facePosition === "perfect" ? "pulse 2s ease-in-out infinite" : "none"
+              animation: positionQuality === "perfect" ? "pulse 2s ease-in-out infinite" : "none"
             }}
           />
         </div>
 
-        {/* Countdown Overlay */}
-        {countdown !== null && (
-          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-            <div className="text-white text-8xl font-bold animate-scale-in">
-              {countdown}
-            </div>
+        {/* Mesh overlay */}
+        {faceDetected && landmarks.length > 0 && (
+          <div className="absolute inset-0 pointer-events-none">
+            {landmarks.slice(0, 200).map((p, i) => (
+              <div
+                key={i}
+                className="absolute w-1.5 h-1.5 rounded-full bg-success/80"
+                style={{ left: `${p.x * 100}%`, top: `${p.y * 100}%`, transform: "translate(-50%, -50%)" }}
+              />
+            ))}
           </div>
         )}
 
@@ -232,6 +218,7 @@ export const CameraCapture = ({ stream, onCapture, onFlipCamera }: CameraCapture
           className={`w-20 h-20 rounded-full p-0 ${
             canCapture ? "bg-success hover:bg-success/90 animate-glow-pulse" : "bg-muted"
           }`}
+          aria-label={canCapture ? "Capture photo (ready)" : "Capture disabled - align face and lighting"}
         >
           <div className="w-16 h-16 rounded-full border-4 border-white" />
         </Button>
