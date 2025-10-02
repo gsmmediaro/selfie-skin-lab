@@ -10,7 +10,7 @@ export const ProgressTracker = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
 
   return (
-    <Card className="p-6 overflow-hidden">
+    <Card className="p-6 overflow-hidden relative z-0">
       <div className="flex items-center gap-2 mb-4">
         <Flame className="w-5 h-5 text-warning" />
         <h3 className="text-lg font-bold">7 Day Streak!</h3>
