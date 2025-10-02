@@ -181,14 +181,14 @@ const Index = () => {
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div className="space-y-8 animate-fade-in">
             <div className="space-y-4">
-              <h1 className="text-5xl md:text-6xl font-bold leading-tight">
-                Your Personal{" "}
+              <h1 className="text-5xl md:text-6xl font-display font-bold leading-tight">
+                Stop Guessing.{" "}
                 <span className="bg-gradient-glow bg-clip-text text-transparent">
-                  Skin Analysis Lab
+                  Start Glowing.
                 </span>
               </h1>
               <p className="text-xl text-muted-foreground max-w-lg">
-                Transform your smartphone into an AI-powered skin health tracker. Get your Glow Score in seconds.
+                AI-Powered Skin Analysis. Discover what your skin really needs in 60 seconds. Join 50,000+ users who've transformed their skincare routine.
               </p>
             </div>
 
@@ -276,39 +276,45 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Testimonials Section */}
+      {/* Testimonials Section - Real Journeys, Real Results */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Real Results, Real People</h2>
+            <h2 className="text-4xl font-display font-bold mb-4">Real Journeys, Real Results</h2>
             <p className="text-xl text-muted-foreground">
-              Join thousands who transformed their skin health
+              See how users transformed their skin with SkinScan
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-8 mb-8">
             {testimonials.map((testimonial, index) => (
               <div
                 key={index}
-                className="bg-white dark:bg-card rounded-2xl p-8 shadow-card"
+                className="bg-card border rounded-2xl p-6 shadow-card hover:shadow-glow transition-all duration-300"
               >
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-glow flex items-center justify-center text-white font-bold">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-14 h-14 rounded-full bg-success flex items-center justify-center text-success-foreground font-display font-bold text-xl shadow-lg">
                     {testimonial.score}
                   </div>
                   <div>
                     <div className="font-bold text-foreground">{testimonial.name}</div>
-                    <div className="text-sm text-muted-foreground">Glow Score: {testimonial.score}</div>
+                    <div className="text-sm text-success font-semibold">Glow Score: {testimonial.score}</div>
                   </div>
                 </div>
-                <p className="text-muted-foreground italic">"{testimonial.text}"</p>
-                <div className="mt-4 flex gap-1">
+                <p className="text-muted-foreground italic mb-4">"{testimonial.text}"</p>
+                <div className="flex gap-1">
                   {[...Array(5)].map((_, i) => (
-                    <span key={i} className="text-warning">★</span>
+                    <span key={i} className="text-warning text-lg">★</span>
                   ))}
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground mb-4">
+              Video testimonials coming soon from our TikTok & Instagram community
+            </p>
           </div>
         </div>
       </section>

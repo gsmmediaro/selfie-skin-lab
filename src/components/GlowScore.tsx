@@ -9,10 +9,12 @@ interface GlowScoreProps {
 
 export const GlowScore = ({ score, size = "lg", animate = true }: GlowScoreProps) => {
   const [displayScore, setDisplayScore] = useState(animate ? 0 : score);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     if (!animate) return;
     
+    setIsAnimating(true);
     const duration = 1500;
     const steps = 60;
     const increment = score / steps;
@@ -22,6 +24,7 @@ export const GlowScore = ({ score, size = "lg", animate = true }: GlowScoreProps
       current += increment;
       if (current >= score) {
         setDisplayScore(score);
+        setIsAnimating(false);
         clearInterval(timer);
       } else {
         setDisplayScore(Math.floor(current));
@@ -91,10 +94,10 @@ export const GlowScore = ({ score, size = "lg", animate = true }: GlowScoreProps
       {/* Score display */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <div className={cn(
-          "font-bold tracking-tight transition-all duration-300",
+          "font-display font-bold tracking-tight transition-all duration-300",
           textSizes[size],
           getScoreColor(score),
-          animate && displayScore === score && "animate-count-up"
+          animate && !isAnimating && displayScore === score && "animate-count-up"
         )}>
           {displayScore}
         </div>
@@ -105,8 +108,9 @@ export const GlowScore = ({ score, size = "lg", animate = true }: GlowScoreProps
 
       {/* Glow effect */}
       <div className={cn(
-        "absolute inset-0 -z-10 rounded-full blur-2xl opacity-50 bg-gradient-to-br",
-        getScoreGradient(score)
+        "absolute inset-0 -z-10 rounded-full blur-2xl transition-opacity duration-500",
+        getScoreGradient(score),
+        animate && isAnimating ? "opacity-30" : "opacity-50"
       )} />
     </div>
   );

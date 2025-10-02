@@ -3,9 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { CircularProgress } from "@/components/CircularProgress";
+import { GlowScore } from "@/components/GlowScore";
 import { MetricDetailModal } from "@/components/MetricDetailModal";
-import { CheckCircle, Target, TrendingUp, TrendingDown, Loader2, AlertCircle, FileText, Download } from "lucide-react";
+import { UpgradeModal } from "@/components/UpgradeModal";
+import { CheckCircle, Target, TrendingUp, TrendingDown, Loader2, AlertCircle, Crown, Lock, FileText, Download, Sparkles } from "lucide-react";
 import { getScanById } from "@/lib/storage";
 import { SkinAnalysis } from "@/lib/mockAI";
 import { toast } from "sonner";
@@ -19,7 +20,9 @@ const Results = () => {
   const [scan, setScan] = useState<SkinAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showHeatMap, setShowHeatMap] = useState(true);
+  const [showHeatMap, setShowHeatMap] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [premiumLoading, setPremiumLoading] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<{
     name: string;
@@ -62,6 +65,15 @@ const Results = () => {
         }
 
         setScan(scanData);
+        
+        // Check premium status
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("subscription_tier")
+          .eq("id", user.id)
+          .single();
+        
+        setIsPremium(profile?.subscription_tier === "premium");
       } catch (err) {
         console.error('[Results] Error loading scan:', err);
         setError("unknown");
@@ -217,14 +229,15 @@ const Results = () => {
         {/* Hero Score Section */}
         <section className="text-center mb-16 space-y-6">
           <div className="flex justify-center mb-6">
-            <CircularProgress 
-              score={scan.glowScore} 
-              delta={Math.floor(Math.random() * 10) - 2}
+            <GlowScore 
+              score={scan.glowScore}
+              size="lg"
+              animate={true}
             />
           </div>
           
           <div className="space-y-2">
-            <p className={`text-xl font-semibold ${colors.text}`}>
+            <p className={`text-xl font-display font-semibold ${colors.text}`}>
               {getScoreMessage(scan.glowScore)}
             </p>
             <p className="text-muted-foreground">
@@ -291,6 +304,51 @@ const Results = () => {
           </Card>
         </section>
 
+        {/* Strategic Upsell CTA */}
+        {!isPremium && (
+          <section className="mb-16">
+            <Card className="border-2 border-accent bg-gradient-to-br from-accent/5 to-transparent overflow-hidden relative">
+              <div className="absolute -top-10 -right-10 w-40 h-40 bg-accent/10 rounded-full blur-3xl" />
+              <div className="relative p-8 text-center space-y-4">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent/10 mb-2">
+                  <Crown className="w-8 h-8 text-accent" />
+                </div>
+                <h3 className="text-2xl font-display font-bold">
+                  Unlock Your Personalized Anti-{focusMetric.name} Routine
+                </h3>
+                <p className="text-muted-foreground max-w-2xl mx-auto">
+                  Get unlimited scans, detailed analysis, morning & evening routines, AI heatmap, and personalized product recommendations.
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                  <div className="flex items-center gap-1.5 text-sm">
+                    <CheckCircle className="w-4 h-4 text-success" />
+                    <span>Unlimited scans</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-sm">
+                    <CheckCircle className="w-4 h-4 text-success" />
+                    <span>Full heatmap</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-sm">
+                    <CheckCircle className="w-4 h-4 text-success" />
+                    <span>Product recommendations</span>
+                  </div>
+                </div>
+                <Button
+                  size="lg"
+                  className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-premium"
+                  onClick={() => setShowUpgradeModal(true)}
+                >
+                  <Crown className="w-4 h-4 mr-2" />
+                  Go Premium - $9.99/mo
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  🛡️ 30-day money-back guarantee
+                </p>
+              </div>
+            </Card>
+          </section>
+        )}
+
         {/* Visual Analysis */}
         <section className="mb-16">
           <h2 className="text-2xl font-bold mb-6">What We Found</h2>
@@ -310,30 +368,59 @@ const Results = () => {
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold">AI Analysis</h3>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setShowHeatMap(!showHeatMap)}
-                >
-                  {showHeatMap ? "Hide" : "Show"} Heat Map
-                </Button>
               </div>
-              <div className="relative rounded-2xl overflow-hidden bg-black aspect-[3/4]">
+              <div className="relative rounded-2xl overflow-hidden bg-black aspect-[3/4] group">
                 {scan.imageData && (
                   <>
                     <img 
                       src={scan.imageData} 
                       alt="Analysis" 
                       className="w-full h-full object-cover"
-                      style={{ opacity: showHeatMap ? 0.6 : 1 }}
                     />
-                    {showHeatMap && (
-                      <div className="absolute inset-0">
-                        {/* Simulated heat map zones */}
-                        <div className="absolute top-1/4 left-1/4 w-16 h-16 bg-warning/40 rounded-full blur-xl" />
-                        <div className="absolute top-1/3 right-1/3 w-12 h-12 bg-success/40 rounded-full blur-xl" />
-                        <div className="absolute bottom-1/3 left-1/3 w-14 h-14 bg-danger/40 rounded-full blur-xl" />
+                    
+                    {/* Heatmap overlay */}
+                    <div className={`absolute inset-0 transition-opacity duration-500 ${isPremium && showHeatMap ? "opacity-100" : "opacity-0"}`}>
+                      <div className="absolute top-1/4 left-1/4 w-16 h-16 bg-warning/40 rounded-full blur-xl" />
+                      <div className="absolute top-1/3 right-1/3 w-12 h-12 bg-success/40 rounded-full blur-xl" />
+                      <div className="absolute bottom-1/3 left-1/3 w-14 h-14 bg-danger/40 rounded-full blur-xl" />
+                    </div>
+
+                    {/* Premium blur overlay for free users */}
+                    {!isPremium && (
+                      <div className="absolute inset-0 backdrop-blur-md bg-black/40 flex items-center justify-center">
+                        <div className="text-center space-y-4 p-8">
+                          <div className="w-16 h-16 rounded-full bg-accent/20 backdrop-blur-sm flex items-center justify-center mx-auto">
+                            <Lock className="w-8 h-8 text-accent" />
+                          </div>
+                          <div>
+                            <h4 className="text-xl font-display font-bold text-white mb-2">
+                              Reveal Heat Map
+                            </h4>
+                            <p className="text-white/80 text-sm mb-4">
+                              See exactly where your skin needs attention
+                            </p>
+                            <Button
+                              onClick={() => setShowUpgradeModal(true)}
+                              className="bg-accent hover:bg-accent/90 text-accent-foreground"
+                            >
+                              <Crown className="w-4 h-4 mr-2" />
+                              Unlock Premium
+                            </Button>
+                          </div>
+                        </div>
                       </div>
+                    )}
+
+                    {/* Toggle button for premium users */}
+                    {isPremium && (
+                      <Button 
+                        variant="secondary"
+                        size="sm"
+                        className="absolute top-3 right-3"
+                        onClick={() => setShowHeatMap(!showHeatMap)}
+                      >
+                        {showHeatMap ? "Hide" : "Show"} Heat Map
+                      </Button>
                     )}
                   </>
                 )}
@@ -557,6 +644,16 @@ const Results = () => {
           imageData={scan.imageData}
         />
       )}
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        open={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        onUpgrade={handlePremiumUpgrade}
+        loading={premiumLoading}
+        title="Unlock Premium Analysis"
+        description="Get unlimited scans, detailed heatmap analysis, and personalized recommendations"
+      />
     </div>
   );
 };
