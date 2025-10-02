@@ -44,6 +44,61 @@ serve(async (req) => {
       throw new Error("No emails provided");
     }
 
+    // Check subscription tier for rate limits
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("subscription_tier")
+      .eq("id", user.id)
+      .single();
+
+    const isPremium = profile?.subscription_tier === "premium" || profile?.subscription_tier === "pro";
+
+    // Rate limiting: Check daily invite count for free users
+    if (!isPremium) {
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      
+      const { data: recentInvites, error: countError } = await supabase
+        .from("invites")
+        .select("id", { count: "exact" })
+        .eq("inviter_id", user.id)
+        .gte("created_at", oneDayAgo);
+
+      if (countError) {
+        console.error("Error checking invite count:", countError);
+        return new Response(
+          JSON.stringify({ error: "Failed to check rate limits" }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      const dailyLimit = 10; // Free users can send 10 invites per day
+      const currentCount = recentInvites?.length || 0;
+      
+      if (currentCount + emails.length > dailyLimit) {
+        console.log(`Rate limit exceeded for user ${user.id}: ${currentCount}/${dailyLimit} invites in 24h`);
+        return new Response(
+          JSON.stringify({ 
+            error: "Daily invite limit reached",
+            message: `You can only send ${dailyLimit} invites per day. You have sent ${currentCount} in the last 24 hours.`,
+            code: "RATE_LIMIT_EXCEEDED",
+            limit: dailyLimit,
+            current: currentCount
+          }),
+          {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      console.log(`User ${user.id} has sent ${currentCount}/${dailyLimit} invites in last 24h`);
+    } else {
+      console.log("Premium user - unlimited invites");
+    }
+
     const appUrl = `${req.headers.get("origin") || "https://tqnlhqtruatpaplsrtso.lovable.app"}`;
     
     // Create invite records with tokens

@@ -14,6 +14,87 @@ serve(async (req) => {
   try {
     console.log('Analyze function called');
     
+    // Get authentication token
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }), 
+        { 
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // Create Supabase client for auth check
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.38.4');
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }), 
+        { 
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    console.log('User authenticated:', user.id);
+
+    // Check subscription tier and scan limits
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('subscription_tier')
+      .eq('id', user.id)
+      .single();
+
+    const isPremium = profile?.subscription_tier === 'premium' || profile?.subscription_tier === 'pro';
+
+    // Premium users have unlimited scans, free users need to check limits
+    if (!isPremium) {
+      const { data: stats, error: statsError } = await supabase
+        .from('user_stats')
+        .select('free_scans_remaining')
+        .eq('user_id', user.id)
+        .single();
+
+      if (statsError) {
+        console.error('Error fetching user stats:', statsError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to check scan limits' }), 
+          { 
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+
+      if (!stats || stats.free_scans_remaining <= 0) {
+        console.log('Rate limit exceeded for user:', user.id);
+        return new Response(
+          JSON.stringify({ 
+            error: 'No scans remaining',
+            message: 'You have used all your free scans. Upgrade to premium for unlimited scans or invite friends to earn more.',
+            code: 'RATE_LIMIT_EXCEEDED'
+          }), 
+          { 
+            status: 429,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+
+      console.log('User has', stats.free_scans_remaining, 'scans remaining');
+    } else {
+      console.log('Premium user - unlimited scans');
+    }
+    
     // Get the image from the request
     const contentType = req.headers.get('content-type') || '';
     let imageBlob: Blob;
@@ -85,6 +166,33 @@ serve(async (req) => {
     }
 
     console.log('Successfully parsed n8n response');
+    
+    // Decrement scan count for free users after successful analysis
+    if (!isPremium) {
+      // Get current stats
+      const { data: currentStats } = await supabase
+        .from('user_stats')
+        .select('free_scans_remaining, total_scans')
+        .eq('user_id', user.id)
+        .single();
+
+      if (currentStats) {
+        const { error: updateError } = await supabase
+          .from('user_stats')
+          .update({ 
+            free_scans_remaining: Math.max(0, currentStats.free_scans_remaining - 1),
+            total_scans: currentStats.total_scans + 1
+          })
+          .eq('user_id', user.id);
+
+        if (updateError) {
+          console.error('Error updating scan count:', updateError);
+          // Don't fail the request, but log it
+        } else {
+          console.log('Updated scan count for user:', user.id);
+        }
+      }
+    }
     
     return new Response(JSON.stringify(responseData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
