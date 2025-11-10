@@ -20,17 +20,13 @@ export const CircularProgress = ({
   const offset = circumference - (score / 100) * circumference;
 
   const getScoreColor = (score: number) => {
-    if (score >= 86) return "#4ade80"; // green-400
-    if (score >= 71) return "#4ade80"; // green-400
-    if (score >= 41) return "#facc15"; // yellow-400
-    return "#f87171"; // red-400
+    // Design alb profesional: doar albastru
+    return "#3b82f6"; // blue-500
   };
 
   const getTextColor = (score: number) => {
-    if (score >= 86) return "text-green-400 drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]";
-    if (score >= 71) return "text-green-400 drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]";
-    if (score >= 41) return "text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]";
-    return "text-red-400 drop-shadow-[0_0_8px_rgba(248,113,113,0.5)]";
+    // Albastru profesional pentru toate scorurile
+    return "text-blue-600";
   };
 
   return (
@@ -56,7 +52,7 @@ export const CircularProgress = ({
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="#262626"
+            stroke="#e5e7eb"
             strokeWidth={strokeWidth}
           />
           {/* Progress circle with glow */}
@@ -80,20 +76,20 @@ export const CircularProgress = ({
           <div className={`text-5xl font-bold ${getTextColor(score)} animate-count-up`}>
             {score}
           </div>
-          <div className="text-sm text-neutral-400 mt-1">Glow Score</div>
+          <div className="text-sm text-gray-500 mt-1">Glow Score</div>
         </div>
       </div>
-      
+
       {/* Delta and subtext */}
       {delta !== undefined && delta !== 0 && (
-        <div className={`flex items-center gap-1 mt-4 ${delta > 0 ? 'text-green-400' : 'text-red-400'}`}>
+        <div className={`flex items-center gap-1 mt-4 ${delta > 0 ? 'text-blue-600' : 'text-gray-600'}`}>
           {delta > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
           <span className="font-semibold">{delta > 0 ? '+' : ''}{delta} from last scan</span>
         </div>
       )}
 
       {subtext && (
-        <div className="text-sm text-neutral-400 mt-2">{subtext}</div>
+        <div className="text-sm text-gray-500 mt-2">{subtext}</div>
       )}
     </div>
   );

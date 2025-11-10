@@ -35,21 +35,18 @@ export const GlowScore = ({ score, size = "lg", animate = true }: GlowScoreProps
   }, [score, animate]);
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-400 drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]";
-    if (score >= 60) return "text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]";
-    return "text-red-400 drop-shadow-[0_0_8px_rgba(248,113,113,0.5)]";
+    // Design alb profesional: doar albastru pentru toate scorurile
+    return "text-blue-600";
   };
 
   const getScoreGradient = (score: number) => {
-    if (score >= 80) return "from-green-500/30 to-green-500/5";
-    if (score >= 60) return "from-yellow-500/30 to-yellow-500/5";
-    return "from-red-500/30 to-red-500/5";
+    // Gradient subtil albastru
+    return "from-blue-500/10 to-blue-500/5";
   };
 
   const getStrokeColor = (score: number) => {
-    if (score >= 80) return "#4ade80"; // green-400
-    if (score >= 60) return "#facc15"; // yellow-400
-    return "#f87171"; // red-400
+    // Albastru profesional consistent
+    return "#3b82f6"; // blue-500
   };
 
   const sizeClasses = {
@@ -85,7 +82,7 @@ export const GlowScore = ({ score, size = "lg", animate = true }: GlowScoreProps
           cy="50"
           r="45"
           fill="none"
-          stroke="#262626"
+          stroke="#e5e7eb"
           strokeWidth="8"
         />
         {/* Progress circle with glow */}
@@ -116,7 +113,7 @@ export const GlowScore = ({ score, size = "lg", animate = true }: GlowScoreProps
         )}>
           {displayScore}
         </div>
-        <div className="text-sm font-medium text-neutral-400 mt-1">
+        <div className="text-sm font-medium text-gray-500 mt-1">
           Glow Score
         </div>
       </div>

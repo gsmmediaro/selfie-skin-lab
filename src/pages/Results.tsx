@@ -261,10 +261,13 @@ const Results = () => {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 86) return { text: "text-green-400", bg: "bg-green-500", border: "border-green-500", glow: "shadow-green-500/50" };
-    if (score >= 71) return { text: "text-green-400", bg: "bg-green-500", border: "border-green-500", glow: "shadow-green-500/50" };
-    if (score >= 56) return { text: "text-yellow-400", bg: "bg-yellow-500", border: "border-yellow-500", glow: "shadow-yellow-500/50" };
-    return { text: "text-red-400", bg: "bg-red-500", border: "border-red-500", glow: "shadow-red-500/50" };
+    // Design alb profesional: doar albastru pentru toate graficele
+    return {
+      text: "text-blue-600",
+      bg: "bg-blue-500",
+      border: "border-blue-500",
+      glow: "shadow-blue-500/20"
+    };
   };
 
   const colors = getScoreColor(scan.glowScore);
@@ -280,17 +283,17 @@ const Results = () => {
   const focusMetric = metricsArray[0];
 
   return (
-    <div className="min-h-screen bg-neutral-950">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-neutral-900 border-b border-neutral-800 sticky top-0 z-10">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <button
             onClick={() => navigate("/")}
-            className="text-2xl font-bold text-white"
+            className="text-2xl font-bold text-gray-900"
           >
             SkinScan
           </button>
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-gray-500">
             Analysis Complete
           </div>
         </div>
@@ -312,15 +315,15 @@ const Results = () => {
               {getScoreMessage(scan.glowScore)}
             </p>
             {percentile !== null && (
-              <p className="text-muted-foreground">
+              <p className="text-gray-500">
                 You're in the {percentile}th percentile of users
               </p>
             )}
-            <p className="text-sm text-muted-foreground">
-              Scanned {new Date(scan.timestamp).toLocaleDateString("en-US", { 
-                year: "numeric", 
-                month: "long", 
-                day: "numeric" 
+            <p className="text-sm text-gray-500">
+              Scanned {new Date(scan.timestamp).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric"
               })}
             </p>
           </div>
@@ -331,46 +334,46 @@ const Results = () => {
         </section>
 
         {/* Quick Snapshot */}
-        <section className="grid md:grid-cols-2 gap-6 mb-16">
+        <section className="grid md:grid-cols-2 gap-8 mb-16">
           {/* Strengths Card */}
-          <Card className="p-6 bg-neutral-900 border-green-500/20 rounded-2xl shadow-lg shadow-green-500/10">
+          <Card className="p-8 bg-white border-gray-200 rounded-2xl shadow-md">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-xl bg-green-500/10">
-                <CheckCircle className="w-6 h-6 text-green-400" />
+              <div className="p-2 rounded-xl bg-blue-50">
+                <CheckCircle className="w-6 h-6 text-blue-500" />
               </div>
-              <h3 className="text-lg font-semibold text-white">Your Strengths</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Your Strengths</h3>
             </div>
-            <p className="text-3xl font-bold text-green-400 mb-1">
+            <p className="text-3xl font-bold text-blue-600 mb-1">
               {strengthMetric.name}: {strengthMetric.score}
             </p>
-            <p className="text-sm text-neutral-400 mb-4">
+            <p className="text-sm text-gray-500 mb-4">
               Your {strengthMetric.name.toLowerCase()} is {strengthMetric.severity.toLowerCase()}
             </p>
-            <div className="h-2 bg-neutral-800 rounded-full overflow-hidden">
+            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-green-500 shadow-lg shadow-green-500/50"
+                className="h-full bg-blue-500"
                 style={{ width: `${strengthMetric.score}%` }}
               />
             </div>
           </Card>
 
           {/* Focus Area Card */}
-          <Card className={`p-6 bg-neutral-900 rounded-2xl shadow-lg ${focusMetric.score >= 56 ? "border-yellow-500/20 shadow-yellow-500/10" : "border-red-500/20 shadow-red-500/10"}`}>
+          <Card className="p-8 bg-white border-gray-200 rounded-2xl shadow-md">
             <div className="flex items-center gap-3 mb-4">
-              <div className={`p-2 rounded-xl ${focusMetric.score >= 56 ? "bg-yellow-500/10" : "bg-red-500/10"}`}>
-                <Target className={`w-6 h-6 ${focusMetric.score >= 56 ? "text-yellow-400" : "text-red-400"}`} />
+              <div className="p-2 rounded-xl bg-blue-50">
+                <Target className="w-6 h-6 text-blue-500" />
               </div>
-              <h3 className="text-lg font-semibold text-white">Focus Area</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Focus Area</h3>
             </div>
-            <p className={`text-3xl font-bold mb-1 ${focusMetric.score >= 56 ? "text-yellow-400" : "text-red-400"}`}>
+            <p className="text-3xl font-bold text-blue-600 mb-1">
               {focusMetric.name}: {focusMetric.score}
             </p>
-            <p className="text-sm text-neutral-400 mb-4">
+            <p className="text-sm text-gray-500 mb-4">
               Addressing this will improve your overall score most
             </p>
-            <div className="h-2 bg-neutral-800 rounded-full overflow-hidden">
+            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
               <div
-                className={focusMetric.score >= 56 ? "h-full bg-yellow-500 shadow-lg shadow-yellow-500/50" : "h-full bg-red-500 shadow-lg shadow-red-500/50"}
+                className="h-full bg-blue-500"
                 style={{ width: `${focusMetric.score}%` }}
               />
             </div>
@@ -504,8 +507,8 @@ const Results = () => {
 
         {/* Detailed Breakdown */}
         <section className="mb-16">
-          <h2 className="text-2xl font-bold mb-6 text-white">Detailed Metrics</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <h2 className="text-2xl font-bold mb-8 text-gray-900">Detailed Metrics</h2>
+          <div className="grid grid-cols-2 gap-6">
             {metricsArray.map((metric) => {
               const metricColors = getScoreColor(metric.score);
               const change = metricDeltas[metric.key] || 0;
@@ -513,27 +516,27 @@ const Results = () => {
               return (
                 <Card
                   key={metric.key}
-                  className={`p-6 cursor-pointer bg-neutral-900 border-neutral-800 rounded-2xl hover:shadow-lg hover:${metricColors.glow} transition-all`}
+                  className="p-6 cursor-pointer bg-white border-gray-200 rounded-xl shadow-md hover:shadow-lg transition-all"
                   onClick={() => setSelectedMetric(metric)}
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-semibold text-base text-white">{metric.name}</h3>
+                  <div className="flex items-start justify-between mb-4">
+                    <h3 className="font-semibold text-base text-gray-900">{metric.name}</h3>
                     <span className={`text-3xl font-bold ${metricColors.text}`}>
                       {metric.score}
                     </span>
                   </div>
 
                   <div className="mb-3">
-                    <div className="w-full bg-neutral-800 rounded-full h-2 mb-2">
+                    <div className="w-full bg-gray-100 rounded-full h-2 mb-2">
                       <div
-                        className={`h-2 rounded-full ${metricColors.bg} shadow-lg ${metricColors.glow}`}
+                        className={`h-2 rounded-full ${metricColors.bg}`}
                         style={{ width: `${metric.score}%` }}
                       />
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-neutral-400">{metric.severity}</span>
+                      <span className="text-gray-500">{metric.severity}</span>
                       {change !== 0 && (
-                        <span className={`flex items-center gap-1 ${change > 0 ? "text-green-400" : "text-red-400"}`}>
+                        <span className={`flex items-center gap-1 ${change > 0 ? "text-blue-600" : "text-gray-600"}`}>
                           {change > 0 ? (
                             <TrendingUp className="w-4 h-4" />
                           ) : (
@@ -545,7 +548,7 @@ const Results = () => {
                     </div>
                   </div>
 
-                  <p className="text-xs text-neutral-400">
+                  <p className="text-sm text-gray-500">
                     {metric.description}
                   </p>
                 </Card>
@@ -556,34 +559,34 @@ const Results = () => {
 
         {/* Action Items */}
         <section className="mb-16">
-          <h2 className="text-2xl font-bold mb-6 text-white">Your Next Steps</h2>
-          <Card className="p-6 bg-neutral-900 border-neutral-800 rounded-2xl">
-            <ol className="space-y-4">
+          <h2 className="text-2xl font-bold mb-8 text-gray-900">Your Next Steps</h2>
+          <Card className="p-8 bg-white border-gray-200 rounded-xl shadow-md">
+            <ol className="space-y-6">
               <li className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500/10 text-green-400 flex items-center justify-center font-semibold">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-semibold">
                   1
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium mb-1 text-white">Start using a vitamin C serum for {focusMetric.name.toLowerCase()}</p>
-                  <p className="text-sm text-neutral-400">Apply in the morning after cleansing</p>
+                  <p className="font-medium mb-1 text-gray-900">Start using a vitamin C serum for {focusMetric.name.toLowerCase()}</p>
+                  <p className="text-sm text-gray-500">Apply in the morning after cleansing</p>
                 </div>
               </li>
               <li className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500/10 text-green-400 flex items-center justify-center font-semibold">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-semibold">
                   2
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium mb-1 text-white">Add retinol to evening routine for texture</p>
-                  <p className="text-sm text-neutral-400">Start with 2-3 times per week</p>
+                  <p className="font-medium mb-1 text-gray-900">Add retinol to evening routine for texture</p>
+                  <p className="text-sm text-gray-500">Start with 2-3 times per week</p>
                 </div>
               </li>
               <li className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500/10 text-green-400 flex items-center justify-center font-semibold">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-semibold">
                   3
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium mb-1 text-white">Take your next scan in 5-7 days</p>
-                  <p className="text-sm text-neutral-400">Track your progress over time</p>
+                  <p className="font-medium mb-1 text-gray-900">Take your next scan in 5-7 days</p>
+                  <p className="text-sm text-gray-500">Track your progress over time</p>
                 </div>
               </li>
             </ol>
